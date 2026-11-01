@@ -6,6 +6,7 @@
 - 每轮最多 3 个问题，带例子、选项和推荐答案
 - 每个维度必须落到「已确认 / 不适用 / 待定」，不允许静默跳过
 - PRD 有状态门槛：只有业务待定项为 0 时才是「可开发」
+- 自带检查脚本：Agent 生成后必须跑通，开发收文档时用同一个脚本复核
 
 采用 [Agent Skills](https://agentskills.io) 通用格式（`SKILL.md`），Claude Code、Codex 等支持该格式的工具都能直接使用。
 
@@ -34,6 +35,22 @@ mkdir -p .agents/skills && cp -r /tmp/prd-clarify-skill/prd-clarify .agents/skil
 
 安装后重启工具。
 
+### 更新
+
+推荐用链接方式安装，以后只需 `git pull`：
+
+```bash
+git clone https://github.com/xxy757/prd-clarify-skill.git ~/prd-clarify-skill
+mkdir -p ~/.claude/skills ~/.agents/skills
+ln -s ~/prd-clarify-skill/prd-clarify ~/.claude/skills/prd-clarify   # Claude Code
+ln -s ~/prd-clarify-skill/prd-clarify ~/.agents/skills/prd-clarify   # Codex
+
+# 以后更新
+cd ~/prd-clarify-skill && git pull
+```
+
+如果是复制安装，更新时删掉旧文件夹重新复制。更新后重启工具。版本变化见 [CHANGELOG.md](CHANGELOG.md)。
+
 **其他不支持 Skill 的 AI 工具：** 把 `prd-clarify/` 文件夹放进仓库，对 AI 说"请阅读 `prd-clarify/SKILL.md` 并按它的流程帮我写需求"即可。
 
 ## 使用
@@ -46,13 +63,24 @@ mkdir -p .agents/skills && cp -r /tmp/prd-clarify-skill/prd-clarify .agents/skil
 
 生成的文件位于 `prd/YYYY-MM-DD-<短名>.md`。
 
+## 检查 PRD（开发收文档时）
+
+```bash
+node <skill 目录>/scripts/check-prd.mjs prd/2026-11-01-xxx.md
+```
+
+`✗` 是错误（必须改），`!` 是警告。脚本只能检查结构；"产品经理是否真的确认过"需要人工看 PRD 里的「澄清记录」。需要 Node 18 以上。
+
 ## 文件结构
 
 ```
 prd-clarify/
 ├── SKILL.md                    # 主流程与铁律
-└── references/
-    ├── question-bank.md        # 澄清维度清单（A～G 七组）
-    ├── tech-probe.md           # 静默技术调研方法
-    └── prd-template.md         # PRD 模板与完整度自检
+├── references/
+│   ├── question-bank.md        # 澄清维度清单（A～G 七组）
+│   ├── tech-probe.md           # 静默技术调研方法
+│   └── prd-template.md         # PRD 模板与完整度自检
+└── scripts/
+    └── check-prd.mjs           # PRD 检查脚本（零依赖）
+tests/                          # 检查脚本自测：bash tests/run.sh
 ```
